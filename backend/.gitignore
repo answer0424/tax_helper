@@ -73,5 +73,3 @@ Thumbs.db
 #########################
 logs/
 *.log
-
-application.yaml
