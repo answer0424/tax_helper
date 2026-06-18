@@ -1,6 +1,7 @@
 package com.tax_helper.backend.workspace.web;
 
 import com.tax_helper.backend.workspace.EvidenceUploadService;
+import com.tax_helper.backend.workspace.OcrService;
 import com.tax_helper.backend.workspace.WorkspaceService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,10 +27,16 @@ public class WorkspaceController {
 
     private final WorkspaceService workspaceService;
     private final EvidenceUploadService evidenceUploadService;
+    private final OcrService ocrService;
 
-    public WorkspaceController(WorkspaceService workspaceService, EvidenceUploadService evidenceUploadService) {
+    public WorkspaceController(
+            WorkspaceService workspaceService,
+            EvidenceUploadService evidenceUploadService,
+            OcrService ocrService
+    ) {
         this.workspaceService = workspaceService;
         this.evidenceUploadService = evidenceUploadService;
+        this.ocrService = ocrService;
     }
 
     @GetMapping("/hospitals/{hospitalId}/tax-years/{taxYear}/transactions")
@@ -86,6 +94,19 @@ public class WorkspaceController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
+    }
+
+    @PostMapping("/evidences/{evidenceId}/ocr")
+    public EvidenceResponse runOcr(@PathVariable Long evidenceId) {
+        return ocrService.runOcr(evidenceId);
+    }
+
+    @PutMapping("/evidences/{evidenceId}/ocr")
+    public EvidenceResponse updateOcr(
+            @PathVariable Long evidenceId,
+            @RequestBody OcrUpdateRequest request
+    ) {
+        return ocrService.updateOcrResult(evidenceId, request);
     }
 
     @GetMapping("/rules")

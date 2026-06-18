@@ -57,6 +57,19 @@ export async function uploadEvidenceFiles({ hospitalId, taxYear, files }) {
   }
 }
 
+export function runEvidenceOcr(evidenceId) {
+  return apiRequest(`/api/evidences/${evidenceId}/ocr`, {
+    method: 'POST',
+  })
+}
+
+export function updateEvidenceOcr(evidenceId, payload) {
+  return apiRequest(`/api/evidences/${evidenceId}/ocr`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
 function getSafeErrorMessage(status, code) {
   if (code === 'VALIDATION_ERROR') {
     return '입력값을 다시 확인해 주세요.'

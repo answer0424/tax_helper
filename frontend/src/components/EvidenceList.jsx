@@ -1,4 +1,4 @@
-import { uploadStatusLabels } from '../constants/labels'
+import { ocrStatusLabels, uploadStatusLabels } from '../constants/labels'
 import { formatBytes } from '../utils/formatters'
 
 export function EvidenceList({ evidences, selectedEvidenceId, onSelect }) {
@@ -21,6 +21,10 @@ export function EvidenceList({ evidences, selectedEvidenceId, onSelect }) {
             <strong>{evidence.originalFileName}</strong>
             <span>
               {formatBytes(evidence.fileSize)} · {uploadStatusLabels[evidence.uploadStatus]}
+            </span>
+            <span>
+              {ocrStatusLabels[evidence.ocrStatus] ?? 'OCR 대기'}
+              {evidence.ocrReviewRequired ? ' · 검토필요' : ''}
             </span>
             <small>{evidence.filePath}</small>
           </button>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { apiRequest, uploadEvidenceFiles } from './api/client'
+import { apiRequest, runEvidenceOcr, updateEvidenceOcr, uploadEvidenceFiles } from './api/client'
 import { AppHeader } from './components/AppHeader'
 import { EvidenceList } from './components/EvidenceList'
 import { EvidencePreview } from './components/EvidencePreview'
@@ -7,6 +7,7 @@ import { EvidenceUploadPanel } from './components/EvidenceUploadPanel'
 import { HospitalList } from './components/HospitalList'
 import { HospitalRegistrationForm } from './components/HospitalRegistrationForm'
 import { Notice } from './components/Notice'
+import { OcrEditor } from './components/OcrEditor'
 import { TaxYearPanel } from './components/TaxYearPanel'
 import { WorkspaceSummary } from './components/WorkspaceSummary'
 import { initialHospitalForm } from './constants/labels'
@@ -204,6 +205,58 @@ function App() {
     }
   }
 
+  async function runOcrForSelectedEvidence() {
+    if (!selectedEvidenceId) {
+      setError('OCR을 실행할 증빙을 선택해 주세요.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const updatedEvidence = await runEvidenceOcr(selectedEvidenceId)
+      replaceEvidence(updatedEvidence)
+      setMessage(
+        updatedEvidence.ocrStatus === 'COMPLETED'
+          ? 'OCR 추출이 완료되었습니다.'
+          : 'OCR을 완료하지 못했습니다. 실패 사유를 확인해 주세요.',
+      )
+    } catch (event) {
+      setError(event.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function saveOcrResult(payload) {
+    if (!selectedEvidenceId) {
+      setError('OCR 결과를 저장할 증빙을 선택해 주세요.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const updatedEvidence = await updateEvidenceOcr(selectedEvidenceId, payload)
+      replaceEvidence(updatedEvidence)
+      setMessage('OCR 결과를 저장했습니다.')
+    } catch (event) {
+      setError(event.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function replaceEvidence(updatedEvidence) {
+    setEvidences((current) =>
+      current.map((evidence) => (evidence.id === updatedEvidence.id ? updatedEvidence : evidence)),
+    )
+  }
+
   return (
     <main className="app-shell">
       <AppHeader loading={loading} />
@@ -243,6 +296,16 @@ function App() {
         />
         <EvidenceList evidences={evidences} selectedEvidenceId={selectedEvidenceId} onSelect={setSelectedEvidenceId} />
         <EvidencePreview evidence={selectedEvidence} />
+      </section>
+
+      <section className="ocr-layout">
+        <OcrEditor
+          key={selectedEvidence ? `${selectedEvidence.id}-${selectedEvidence.ocrStatus}-${selectedEvidence.ocrConfidence}` : 'empty'}
+          evidence={selectedEvidence}
+          loading={loading}
+          onRunOcr={runOcrForSelectedEvidence}
+          onSave={saveOcrResult}
+        />
       </section>
     </main>
   )

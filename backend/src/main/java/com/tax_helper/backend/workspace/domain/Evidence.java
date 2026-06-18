@@ -13,6 +13,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -52,7 +54,7 @@ public class Evidence {
     private String contentType;
 
     @Column
-    private long fileSize;
+    private Long fileSize;
 
     @Column(length = 128)
     private String fileHash;
@@ -62,7 +64,7 @@ public class Evidence {
     private EvidenceUploadStatus uploadStatus = EvidenceUploadStatus.UPLOADED;
 
     @Column
-    private boolean duplicateSuspected;
+    private Boolean duplicateSuspected;
 
     private Long duplicateOfEvidenceId;
 
@@ -70,6 +72,42 @@ public class Evidence {
     private String ocrRawText;
 
     private Integer ocrConfidence;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private OcrStatus ocrStatus = OcrStatus.NOT_STARTED;
+
+    @Column(length = 500)
+    private String ocrErrorMessage;
+
+    @Column
+    private Boolean ocrReviewRequired;
+
+    private LocalDate extractedTransactionDate;
+
+    @Column(length = 120)
+    private String extractedSupplierName;
+
+    @Column(length = 10)
+    private String extractedBusinessRegistrationNumber;
+
+    @Column(precision = 15, scale = 0)
+    private BigDecimal extractedTotalAmount;
+
+    @Column(precision = 15, scale = 0)
+    private BigDecimal extractedSupplyAmount;
+
+    @Column(precision = 15, scale = 0)
+    private BigDecimal extractedVatAmount;
+
+    @Column(length = 300)
+    private String extractedItemName;
+
+    @Column(length = 80)
+    private String extractedPaymentMethod;
+
+    @Column(length = 80)
+    private String extractedApprovalNumber;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -149,7 +187,7 @@ public class Evidence {
     }
 
     public long getFileSize() {
-        return fileSize;
+        return fileSize == null ? 0 : fileSize;
     }
 
     public String getFileHash() {
@@ -161,7 +199,7 @@ public class Evidence {
     }
 
     public boolean isDuplicateSuspected() {
-        return duplicateSuspected;
+        return Boolean.TRUE.equals(duplicateSuspected);
     }
 
     public Long getDuplicateOfEvidenceId() {
@@ -176,7 +214,92 @@ public class Evidence {
         return ocrConfidence;
     }
 
+    public OcrStatus getOcrStatus() {
+        return ocrStatus == null ? OcrStatus.NOT_STARTED : ocrStatus;
+    }
+
+    public String getOcrErrorMessage() {
+        return ocrErrorMessage;
+    }
+
+    public boolean isOcrReviewRequired() {
+        return Boolean.TRUE.equals(ocrReviewRequired);
+    }
+
+    public LocalDate getExtractedTransactionDate() {
+        return extractedTransactionDate;
+    }
+
+    public String getExtractedSupplierName() {
+        return extractedSupplierName;
+    }
+
+    public String getExtractedBusinessRegistrationNumber() {
+        return extractedBusinessRegistrationNumber;
+    }
+
+    public BigDecimal getExtractedTotalAmount() {
+        return extractedTotalAmount;
+    }
+
+    public BigDecimal getExtractedSupplyAmount() {
+        return extractedSupplyAmount;
+    }
+
+    public BigDecimal getExtractedVatAmount() {
+        return extractedVatAmount;
+    }
+
+    public String getExtractedItemName() {
+        return extractedItemName;
+    }
+
+    public String getExtractedPaymentMethod() {
+        return extractedPaymentMethod;
+    }
+
+    public String getExtractedApprovalNumber() {
+        return extractedApprovalNumber;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public void markOcrProcessing() {
+        this.ocrStatus = OcrStatus.PROCESSING;
+        this.ocrErrorMessage = null;
+    }
+
+    public void updateOcrResult(
+            OcrStatus ocrStatus,
+            String ocrRawText,
+            Integer ocrConfidence,
+            boolean ocrReviewRequired,
+            String ocrErrorMessage,
+            LocalDate extractedTransactionDate,
+            String extractedSupplierName,
+            String extractedBusinessRegistrationNumber,
+            BigDecimal extractedTotalAmount,
+            BigDecimal extractedSupplyAmount,
+            BigDecimal extractedVatAmount,
+            String extractedItemName,
+            String extractedPaymentMethod,
+            String extractedApprovalNumber
+    ) {
+        this.ocrStatus = ocrStatus;
+        this.ocrRawText = ocrRawText;
+        this.ocrConfidence = ocrConfidence;
+        this.ocrReviewRequired = ocrReviewRequired;
+        this.ocrErrorMessage = ocrErrorMessage;
+        this.extractedTransactionDate = extractedTransactionDate;
+        this.extractedSupplierName = extractedSupplierName;
+        this.extractedBusinessRegistrationNumber = extractedBusinessRegistrationNumber;
+        this.extractedTotalAmount = extractedTotalAmount;
+        this.extractedSupplyAmount = extractedSupplyAmount;
+        this.extractedVatAmount = extractedVatAmount;
+        this.extractedItemName = extractedItemName;
+        this.extractedPaymentMethod = extractedPaymentMethod;
+        this.extractedApprovalNumber = extractedApprovalNumber;
     }
 }

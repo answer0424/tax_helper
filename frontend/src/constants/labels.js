@@ -21,3 +21,10 @@ export const uploadStatusLabels = {
   DUPLICATE_SUSPECTED: '중복 의심',
   UNSUPPORTED: '지원 안 됨',
 }
+
+export const ocrStatusLabels = {
+  NOT_STARTED: 'OCR 대기',
+  PROCESSING: 'OCR 처리 중',
+  COMPLETED: 'OCR 완료',
+  FAILED: 'OCR 실패',
+}
