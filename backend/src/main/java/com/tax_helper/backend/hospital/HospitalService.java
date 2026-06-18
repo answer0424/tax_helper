@@ -80,7 +80,7 @@ public class HospitalService {
 
     @Transactional(readOnly = true)
     public List<TaxYearResponse> findTaxYears(Long hospitalId) {
-        return taxYearWorkspaceRepository.findByHospitalIdOrderByTaxYearDesc(hospitalId).stream()
+        return taxYearWorkspaceRepository.findByHospital_IdOrderByTaxYearDesc(hospitalId).stream()
                 .map(TaxYearResponse::from)
                 .toList();
     }
@@ -88,7 +88,7 @@ public class HospitalService {
     @Transactional
     public TaxYearResponse createTaxYear(Long hospitalId, int taxYear) {
         Hospital hospital = getHospital(hospitalId);
-        TaxYearWorkspace workspace = taxYearWorkspaceRepository.findByHospitalIdAndTaxYear(hospitalId, taxYear)
+        TaxYearWorkspace workspace = taxYearWorkspaceRepository.findByHospital_IdAndTaxYear(hospitalId, taxYear)
                 .orElseGet(() -> taxYearWorkspaceRepository.save(new TaxYearWorkspace(
                         hospital,
                         taxYear,

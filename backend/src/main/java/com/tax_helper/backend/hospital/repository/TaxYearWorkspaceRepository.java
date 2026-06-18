@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TaxYearWorkspaceRepository extends JpaRepository<TaxYearWorkspace, Long> {
-    List<TaxYearWorkspace> findByHospitalIdOrderByTaxYearDesc(Long hospitalId);
+    List<TaxYearWorkspace> findByHospital_IdOrderByTaxYearDesc(Long hospitalId);
 
-    Optional<TaxYearWorkspace> findByHospitalIdAndTaxYear(Long hospitalId, int taxYear);
+    Optional<TaxYearWorkspace> findByHospital_IdAndTaxYear(Long hospitalId, int taxYear);
 }

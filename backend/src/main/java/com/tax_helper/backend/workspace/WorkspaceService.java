@@ -6,6 +6,7 @@ import com.tax_helper.backend.hospital.repository.HospitalRepository;
 import com.tax_helper.backend.hospital.repository.TaxYearWorkspaceRepository;
 import com.tax_helper.backend.workspace.domain.BusinessTransaction;
 import com.tax_helper.backend.workspace.domain.Evidence;
+import com.tax_helper.backend.workspace.domain.EvidenceUploadStatus;
 import com.tax_helper.backend.workspace.domain.TaxRule;
 import com.tax_helper.backend.workspace.repository.BusinessTransactionRepository;
 import com.tax_helper.backend.workspace.repository.EvidenceRepository;
@@ -47,7 +48,7 @@ public class WorkspaceService {
     public List<BusinessTransactionResponse> findTransactions(Long hospitalId, int taxYear) {
         requireWorkspace(hospitalId, taxYear);
         return businessTransactionRepository
-                .findByHospitalIdAndTaxYearWorkspaceTaxYearOrderByTransactionDateDesc(hospitalId, taxYear)
+                .findByHospital_IdAndTaxYearWorkspace_TaxYearOrderByTransactionDateDesc(hospitalId, taxYear)
                 .stream()
                 .map(BusinessTransactionResponse::from)
                 .toList();
@@ -82,7 +83,7 @@ public class WorkspaceService {
     @Transactional(readOnly = true)
     public List<EvidenceResponse> findEvidences(Long hospitalId, int taxYear) {
         requireWorkspace(hospitalId, taxYear);
-        return evidenceRepository.findByHospitalIdAndTaxYearWorkspaceTaxYearOrderByCreatedAtDesc(hospitalId, taxYear)
+        return evidenceRepository.findByHospital_IdAndTaxYearWorkspace_TaxYearOrderByCreatedAtDesc(hospitalId, taxYear)
                 .stream()
                 .map(EvidenceResponse::from)
                 .toList();
@@ -103,7 +104,14 @@ public class WorkspaceService {
                 transaction,
                 request.evidenceType(),
                 request.filePath(),
+                request.filePath(),
+                request.filePath(),
+                null,
+                0,
                 request.fileHash(),
+                EvidenceUploadStatus.UPLOADED,
+                false,
+                null,
                 request.ocrRawText(),
                 request.ocrConfidence()
         );
@@ -140,7 +148,7 @@ public class WorkspaceService {
     }
 
     private TaxYearWorkspace requireWorkspace(Long hospitalId, int taxYear) {
-        return taxYearWorkspaceRepository.findByHospitalIdAndTaxYear(hospitalId, taxYear)
+        return taxYearWorkspaceRepository.findByHospital_IdAndTaxYear(hospitalId, taxYear)
                 .orElseThrow(() -> new IllegalArgumentException("TAX_YEAR_WORKSPACE_NOT_FOUND"));
     }
 }

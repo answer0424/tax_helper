@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BusinessTransactionRepository extends JpaRepository<BusinessTransaction, Long> {
-    List<BusinessTransaction> findByHospitalIdAndTaxYearWorkspaceTaxYearOrderByTransactionDateDesc(
+    List<BusinessTransaction> findByHospital_IdAndTaxYearWorkspace_TaxYearOrderByTransactionDateDesc(
             Long hospitalId,
             int taxYear
     );

@@ -42,8 +42,29 @@ public class Evidence {
     @Column(nullable = false, length = 500)
     private String filePath;
 
+    @Column(length = 255)
+    private String originalFileName;
+
+    @Column(length = 255)
+    private String storedFileName;
+
+    @Column(length = 120)
+    private String contentType;
+
+    @Column
+    private long fileSize;
+
     @Column(length = 128)
     private String fileHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private EvidenceUploadStatus uploadStatus = EvidenceUploadStatus.UPLOADED;
+
+    @Column
+    private boolean duplicateSuspected;
+
+    private Long duplicateOfEvidenceId;
 
     @Column(length = 2000)
     private String ocrRawText;
@@ -62,7 +83,14 @@ public class Evidence {
             BusinessTransaction transaction,
             EvidenceType evidenceType,
             String filePath,
+            String originalFileName,
+            String storedFileName,
+            String contentType,
+            long fileSize,
             String fileHash,
+            EvidenceUploadStatus uploadStatus,
+            boolean duplicateSuspected,
+            Long duplicateOfEvidenceId,
             String ocrRawText,
             Integer ocrConfidence
     ) {
@@ -71,7 +99,14 @@ public class Evidence {
         this.transaction = transaction;
         this.evidenceType = evidenceType;
         this.filePath = filePath;
+        this.originalFileName = originalFileName;
+        this.storedFileName = storedFileName;
+        this.contentType = contentType;
+        this.fileSize = fileSize;
         this.fileHash = fileHash;
+        this.uploadStatus = uploadStatus == null ? EvidenceUploadStatus.UPLOADED : uploadStatus;
+        this.duplicateSuspected = duplicateSuspected;
+        this.duplicateOfEvidenceId = duplicateOfEvidenceId;
         this.ocrRawText = ocrRawText;
         this.ocrConfidence = ocrConfidence;
         this.createdAt = LocalDateTime.now();
@@ -101,8 +136,36 @@ public class Evidence {
         return filePath;
     }
 
+    public String getOriginalFileName() {
+        return originalFileName;
+    }
+
+    public String getStoredFileName() {
+        return storedFileName;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
     public String getFileHash() {
         return fileHash;
+    }
+
+    public EvidenceUploadStatus getUploadStatus() {
+        return uploadStatus;
+    }
+
+    public boolean isDuplicateSuspected() {
+        return duplicateSuspected;
+    }
+
+    public Long getDuplicateOfEvidenceId() {
+        return duplicateOfEvidenceId;
     }
 
     public String getOcrRawText() {
