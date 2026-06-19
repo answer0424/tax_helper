@@ -273,6 +273,16 @@ button:not(:disabled):hover {
   text-align: left;
 }
 
+.evidence-main-button {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
 .hospital-item.selected {
   border-color: #2563eb;
   background: #eff6ff;
@@ -311,6 +321,46 @@ button:not(:disabled):hover {
 .evidence-item small,
 .transaction-item small {
   overflow-wrap: anywhere;
+}
+
+.duplicate-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.duplicate-summary span,
+.duplicate-summary small {
+  padding: 4px 7px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  color: #374151;
+  background: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.duplicate-summary.warning span,
+.duplicate-summary.warning small {
+  border-color: #fde68a;
+  color: #92400e;
+  background: #fffbeb;
+}
+
+.duplicate-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.duplicate-actions button {
+  min-height: 30px;
+  padding: 0 7px;
+  background: #e5e7eb;
+  color: #111827;
+  font-size: 12px;
 }
 
 .summary-grid {

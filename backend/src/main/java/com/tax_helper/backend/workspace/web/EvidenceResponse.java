@@ -3,6 +3,7 @@ package com.tax_helper.backend.workspace.web;
 import com.tax_helper.backend.workspace.domain.Evidence;
 import com.tax_helper.backend.workspace.domain.EvidenceType;
 import com.tax_helper.backend.workspace.domain.EvidenceUploadStatus;
+import com.tax_helper.backend.workspace.domain.DuplicateStatus;
 import com.tax_helper.backend.workspace.domain.OcrStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,6 +24,11 @@ public record EvidenceResponse(
         EvidenceUploadStatus uploadStatus,
         boolean duplicateSuspected,
         Long duplicateOfEvidenceId,
+        DuplicateStatus duplicateStatus,
+        Long duplicateCandidateEvidenceId,
+        String duplicateReason,
+        Integer duplicateScore,
+        boolean duplicateManuallyReviewed,
         String previewUrl,
         String ocrRawText,
         Integer ocrConfidence,
@@ -56,6 +62,11 @@ public record EvidenceResponse(
                 evidence.getUploadStatus(),
                 evidence.isDuplicateSuspected(),
                 evidence.getDuplicateOfEvidenceId(),
+                evidence.getDuplicateStatus(),
+                evidence.getDuplicateCandidateEvidenceId(),
+                evidence.getDuplicateReason(),
+                evidence.getDuplicateScore(),
+                evidence.isDuplicateManuallyReviewed(),
                 "/api/evidences/" + evidence.getId() + "/file",
                 evidence.getOcrRawText(),
                 evidence.getOcrConfidence(),

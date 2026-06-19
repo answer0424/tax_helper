@@ -39,15 +39,18 @@ public class EvidenceUploadService {
     private final HospitalRepository hospitalRepository;
     private final TaxYearWorkspaceRepository taxYearWorkspaceRepository;
     private final EvidenceRepository evidenceRepository;
+    private final DuplicateDetectionService duplicateDetectionService;
 
     public EvidenceUploadService(
             HospitalRepository hospitalRepository,
             TaxYearWorkspaceRepository taxYearWorkspaceRepository,
-            EvidenceRepository evidenceRepository
+            EvidenceRepository evidenceRepository,
+            DuplicateDetectionService duplicateDetectionService
     ) {
         this.hospitalRepository = hospitalRepository;
         this.taxYearWorkspaceRepository = taxYearWorkspaceRepository;
         this.evidenceRepository = evidenceRepository;
+        this.duplicateDetectionService = duplicateDetectionService;
     }
 
     @Transactional
@@ -174,7 +177,9 @@ public class EvidenceUploadService {
                 null
         );
 
-        return EvidenceResponse.from(evidenceRepository.save(evidence));
+        Evidence savedEvidence = evidenceRepository.save(evidence);
+        duplicateDetectionService.detectAndApply(savedEvidence);
+        return EvidenceResponse.from(savedEvidence);
     }
 
     private Hospital requireHospital(Long hospitalId) {

@@ -10,6 +10,13 @@ export const riskTagLabels = {
   OCR_REVIEW_REQUIRED: 'OCR확인필요',
 }
 
+export const duplicateStatusLabels = {
+  NOT_DUPLICATE: '중복 아님',
+  SUSPECTED: '중복 의심',
+  CONFIRMED_DUPLICATE: '확정 중복',
+  SEPARATE_TRANSACTION: '별도 거래',
+}
+
 export const initialHospitalForm = {
   name: '',
   ownerName: '',

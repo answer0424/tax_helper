@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   apiRequest,
+  detectEvidenceDuplicate,
   getAccountTitleSuggestions,
   getCounterpartyAccountRules,
+  reviewEvidenceDuplicate,
   runEvidenceOcr,
   saveEvidenceTransactionReview,
   updateEvidenceOcr,
@@ -271,6 +273,48 @@ function App() {
     }
   }
 
+  async function reviewDuplicateStatus(evidenceId, duplicateStatus) {
+    setLoading(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const evidence = evidences.find((item) => item.id === evidenceId)
+      const updatedEvidence = await reviewEvidenceDuplicate(evidenceId, {
+        duplicateStatus,
+        duplicateCandidateEvidenceId: evidence?.duplicateCandidateEvidenceId ?? evidence?.duplicateOfEvidenceId ?? null,
+        reason:
+          duplicateStatus === 'CONFIRMED_DUPLICATE'
+            ? '사용자가 중복 증빙으로 확정했습니다.'
+            : duplicateStatus === 'SEPARATE_TRANSACTION'
+              ? '사용자가 별도 거래로 처리했습니다.'
+              : '사용자가 중복 아님으로 처리했습니다.',
+      })
+      replaceEvidence(updatedEvidence)
+      setMessage('중복 상태를 저장했습니다.')
+    } catch (event) {
+      setError(event.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function detectDuplicateForEvidence(evidenceId) {
+    setLoading(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const updatedEvidence = await detectEvidenceDuplicate(evidenceId)
+      replaceEvidence(updatedEvidence)
+      setMessage('중복 후보를 다시 확인했습니다.')
+    } catch (event) {
+      setError(event.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   function replaceEvidence(updatedEvidence) {
     setEvidences((current) =>
       current.map((evidence) => (evidence.id === updatedEvidence.id ? updatedEvidence : evidence)),
@@ -338,7 +382,14 @@ function App() {
           onFilesChange={setUploadFiles}
           onSubmit={uploadEvidences}
         />
-        <EvidenceList evidences={evidences} selectedEvidenceId={selectedEvidenceId} onSelect={setSelectedEvidenceId} />
+        <EvidenceList
+          evidences={evidences}
+          selectedEvidenceId={selectedEvidenceId}
+          loading={loading}
+          onSelect={setSelectedEvidenceId}
+          onDetectDuplicate={detectDuplicateForEvidence}
+          onReviewDuplicate={reviewDuplicateStatus}
+        />
         <EvidencePreview evidence={selectedEvidence} />
       </section>
 

@@ -1,6 +1,7 @@
 package com.tax_helper.backend.workspace.web;
 
 import com.tax_helper.backend.workspace.AccountTitleRecommendationService;
+import com.tax_helper.backend.workspace.DuplicateDetectionService;
 import com.tax_helper.backend.workspace.EvidenceUploadService;
 import com.tax_helper.backend.workspace.OcrService;
 import com.tax_helper.backend.workspace.WorkspaceService;
@@ -32,17 +33,20 @@ public class WorkspaceController {
     private final EvidenceUploadService evidenceUploadService;
     private final OcrService ocrService;
     private final AccountTitleRecommendationService accountTitleRecommendationService;
+    private final DuplicateDetectionService duplicateDetectionService;
 
     public WorkspaceController(
             WorkspaceService workspaceService,
             EvidenceUploadService evidenceUploadService,
             OcrService ocrService,
-            AccountTitleRecommendationService accountTitleRecommendationService
+            AccountTitleRecommendationService accountTitleRecommendationService,
+            DuplicateDetectionService duplicateDetectionService
     ) {
         this.workspaceService = workspaceService;
         this.evidenceUploadService = evidenceUploadService;
         this.ocrService = ocrService;
         this.accountTitleRecommendationService = accountTitleRecommendationService;
+        this.duplicateDetectionService = duplicateDetectionService;
     }
 
     @GetMapping("/hospitals/{hospitalId}/tax-years/{taxYear}/transactions")
@@ -133,6 +137,19 @@ public class WorkspaceController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
                 .contentType(MediaTypeFactory.getMediaType(resource).orElse(MediaType.APPLICATION_OCTET_STREAM))
                 .body(resource);
+    }
+
+    @PostMapping("/evidences/{evidenceId}/duplicate-detection")
+    public EvidenceResponse detectDuplicate(@PathVariable Long evidenceId) {
+        return duplicateDetectionService.detect(evidenceId);
+    }
+
+    @PutMapping("/evidences/{evidenceId}/duplicate-review")
+    public EvidenceResponse reviewDuplicate(
+            @PathVariable Long evidenceId,
+            @Valid @RequestBody DuplicateReviewRequest request
+    ) {
+        return duplicateDetectionService.review(evidenceId, request);
     }
 
     @PostMapping("/evidences/{evidenceId}/transaction-review")

@@ -13,4 +13,6 @@ public interface EvidenceRepository extends JpaRepository<Evidence, Long> {
             int taxYear,
             String fileHash
     );
+
+    List<Evidence> findByHospital_IdAndTaxYearWorkspace_TaxYearAndIdNot(Long hospitalId, int taxYear, Long evidenceId);
 }

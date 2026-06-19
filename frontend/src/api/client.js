@@ -84,6 +84,19 @@ export function updateTransaction(transactionId, payload) {
   })
 }
 
+export function detectEvidenceDuplicate(evidenceId) {
+  return apiRequest(`/api/evidences/${evidenceId}/duplicate-detection`, {
+    method: 'POST',
+  })
+}
+
+export function reviewEvidenceDuplicate(evidenceId, payload) {
+  return apiRequest(`/api/evidences/${evidenceId}/duplicate-review`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
 export function getAccountTitleSuggestions({ hospitalId, counterpartyName, itemName, amount }) {
   const params = new URLSearchParams()
   if (counterpartyName) {

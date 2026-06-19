@@ -31,9 +31,11 @@ public class OcrService {
     private static final Pattern APPROVAL_PATTERN = Pattern.compile("(?:승인|승인번호|approval)\\D*(\\d{6,})", Pattern.CASE_INSENSITIVE);
 
     private final EvidenceRepository evidenceRepository;
+    private final DuplicateDetectionService duplicateDetectionService;
 
-    public OcrService(EvidenceRepository evidenceRepository) {
+    public OcrService(EvidenceRepository evidenceRepository, DuplicateDetectionService duplicateDetectionService) {
         this.evidenceRepository = evidenceRepository;
+        this.duplicateDetectionService = duplicateDetectionService;
     }
 
     @Transactional
@@ -84,6 +86,7 @@ public class OcrService {
                 parsedReceipt.paymentMethod(),
                 parsedReceipt.approvalNumber()
         );
+        duplicateDetectionService.detectAndApply(evidence);
 
         return EvidenceResponse.from(evidence);
     }
@@ -107,6 +110,7 @@ public class OcrService {
                 request.paymentMethod(),
                 request.approvalNumber()
         );
+        duplicateDetectionService.detectAndApply(evidence);
         return EvidenceResponse.from(evidence);
     }
 

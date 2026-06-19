@@ -68,6 +68,20 @@ public class Evidence {
 
     private Long duplicateOfEvidenceId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private DuplicateStatus duplicateStatus = DuplicateStatus.NOT_DUPLICATE;
+
+    private Long duplicateCandidateEvidenceId;
+
+    @Column(length = 500)
+    private String duplicateReason;
+
+    private Integer duplicateScore;
+
+    @Column
+    private Boolean duplicateManuallyReviewed;
+
     @Column(length = 2000)
     private String ocrRawText;
 
@@ -145,6 +159,11 @@ public class Evidence {
         this.uploadStatus = uploadStatus == null ? EvidenceUploadStatus.UPLOADED : uploadStatus;
         this.duplicateSuspected = duplicateSuspected;
         this.duplicateOfEvidenceId = duplicateOfEvidenceId;
+        this.duplicateStatus = duplicateSuspected ? DuplicateStatus.SUSPECTED : DuplicateStatus.NOT_DUPLICATE;
+        this.duplicateCandidateEvidenceId = duplicateOfEvidenceId;
+        this.duplicateReason = duplicateSuspected ? "파일 해시가 같은 증빙이 이미 업로드되어 있습니다." : null;
+        this.duplicateScore = duplicateSuspected ? 100 : null;
+        this.duplicateManuallyReviewed = false;
         this.ocrRawText = ocrRawText;
         this.ocrConfidence = ocrConfidence;
         this.createdAt = LocalDateTime.now();
@@ -207,11 +226,33 @@ public class Evidence {
     }
 
     public boolean isDuplicateSuspected() {
-        return Boolean.TRUE.equals(duplicateSuspected);
+        return Boolean.TRUE.equals(duplicateSuspected)
+                || getDuplicateStatus() == DuplicateStatus.SUSPECTED
+                || getDuplicateStatus() == DuplicateStatus.CONFIRMED_DUPLICATE;
     }
 
     public Long getDuplicateOfEvidenceId() {
         return duplicateOfEvidenceId;
+    }
+
+    public DuplicateStatus getDuplicateStatus() {
+        return duplicateStatus == null ? DuplicateStatus.NOT_DUPLICATE : duplicateStatus;
+    }
+
+    public Long getDuplicateCandidateEvidenceId() {
+        return duplicateCandidateEvidenceId;
+    }
+
+    public String getDuplicateReason() {
+        return duplicateReason;
+    }
+
+    public Integer getDuplicateScore() {
+        return duplicateScore;
+    }
+
+    public boolean isDuplicateManuallyReviewed() {
+        return Boolean.TRUE.equals(duplicateManuallyReviewed);
     }
 
     public String getOcrRawText() {
@@ -313,5 +354,45 @@ public class Evidence {
 
     public void linkTransaction(BusinessTransaction transaction) {
         this.transaction = transaction;
+    }
+
+    public void markDuplicateCandidate(Long candidateEvidenceId, String reason, int score) {
+        if (isDuplicateManuallyReviewed()) {
+            return;
+        }
+        this.duplicateStatus = DuplicateStatus.SUSPECTED;
+        this.duplicateSuspected = true;
+        this.duplicateOfEvidenceId = candidateEvidenceId;
+        this.duplicateCandidateEvidenceId = candidateEvidenceId;
+        this.duplicateReason = reason;
+        this.duplicateScore = score;
+        this.uploadStatus = EvidenceUploadStatus.DUPLICATE_SUSPECTED;
+    }
+
+    public void clearDuplicateCandidate() {
+        if (isDuplicateManuallyReviewed()) {
+            return;
+        }
+        this.duplicateStatus = DuplicateStatus.NOT_DUPLICATE;
+        this.duplicateSuspected = false;
+        this.duplicateOfEvidenceId = null;
+        this.duplicateCandidateEvidenceId = null;
+        this.duplicateReason = null;
+        this.duplicateScore = null;
+        if (this.uploadStatus == EvidenceUploadStatus.DUPLICATE_SUSPECTED) {
+            this.uploadStatus = EvidenceUploadStatus.UPLOADED;
+        }
+    }
+
+    public void reviewDuplicateStatus(DuplicateStatus duplicateStatus, Long candidateEvidenceId, String reason) {
+        this.duplicateStatus = duplicateStatus == null ? DuplicateStatus.NOT_DUPLICATE : duplicateStatus;
+        this.duplicateManuallyReviewed = true;
+        this.duplicateCandidateEvidenceId = candidateEvidenceId;
+        this.duplicateOfEvidenceId = candidateEvidenceId;
+        this.duplicateReason = reason;
+        this.duplicateScore = null;
+        this.duplicateSuspected = this.duplicateStatus == DuplicateStatus.SUSPECTED
+                || this.duplicateStatus == DuplicateStatus.CONFIRMED_DUPLICATE;
+        this.uploadStatus = this.duplicateSuspected ? EvidenceUploadStatus.DUPLICATE_SUSPECTED : EvidenceUploadStatus.UPLOADED;
     }
 }
