@@ -70,6 +70,38 @@ export function updateEvidenceOcr(evidenceId, payload) {
   })
 }
 
+export function saveEvidenceTransactionReview(evidenceId, payload) {
+  return apiRequest(`/api/evidences/${evidenceId}/transaction-review`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function updateTransaction(transactionId, payload) {
+  return apiRequest(`/api/transactions/${transactionId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function getAccountTitleSuggestions({ hospitalId, counterpartyName, itemName, amount }) {
+  const params = new URLSearchParams()
+  if (counterpartyName) {
+    params.set('counterpartyName', counterpartyName)
+  }
+  if (itemName) {
+    params.set('itemName', itemName)
+  }
+  if (amount !== '' && amount !== null && amount !== undefined) {
+    params.set('amount', amount)
+  }
+  return apiRequest(`/api/hospitals/${hospitalId}/account-title-suggestions?${params.toString()}`)
+}
+
+export function getCounterpartyAccountRules(hospitalId) {
+  return apiRequest(`/api/hospitals/${hospitalId}/counterparty-account-rules`)
+}
+
 function getSafeErrorMessage(status, code) {
   if (code === 'VALIDATION_ERROR') {
     return '입력값을 다시 확인해 주세요.'

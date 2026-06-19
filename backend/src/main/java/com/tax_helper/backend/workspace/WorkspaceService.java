@@ -13,6 +13,7 @@ import com.tax_helper.backend.workspace.repository.EvidenceRepository;
 import com.tax_helper.backend.workspace.repository.TaxRuleRepository;
 import com.tax_helper.backend.workspace.web.BusinessTransactionCreateRequest;
 import com.tax_helper.backend.workspace.web.BusinessTransactionResponse;
+import com.tax_helper.backend.workspace.web.BusinessTransactionUpdateRequest;
 import com.tax_helper.backend.workspace.web.EvidenceCreateRequest;
 import com.tax_helper.backend.workspace.web.EvidenceResponse;
 import com.tax_helper.backend.workspace.web.TaxRuleCreateRequest;
@@ -29,19 +30,22 @@ public class WorkspaceService {
     private final BusinessTransactionRepository businessTransactionRepository;
     private final EvidenceRepository evidenceRepository;
     private final TaxRuleRepository taxRuleRepository;
+    private final AccountTitleRecommendationService accountTitleRecommendationService;
 
     public WorkspaceService(
             HospitalRepository hospitalRepository,
             TaxYearWorkspaceRepository taxYearWorkspaceRepository,
             BusinessTransactionRepository businessTransactionRepository,
             EvidenceRepository evidenceRepository,
-            TaxRuleRepository taxRuleRepository
+            TaxRuleRepository taxRuleRepository,
+            AccountTitleRecommendationService accountTitleRecommendationService
     ) {
         this.hospitalRepository = hospitalRepository;
         this.taxYearWorkspaceRepository = taxYearWorkspaceRepository;
         this.businessTransactionRepository = businessTransactionRepository;
         this.evidenceRepository = evidenceRepository;
         this.taxRuleRepository = taxRuleRepository;
+        this.accountTitleRecommendationService = accountTitleRecommendationService;
     }
 
     @Transactional(readOnly = true)
@@ -77,7 +81,63 @@ public class WorkspaceService {
                 request.memo()
         );
 
-        return BusinessTransactionResponse.from(businessTransactionRepository.save(transaction));
+        BusinessTransaction savedTransaction = businessTransactionRepository.save(transaction);
+        accountTitleRecommendationService.learnIfPossible(
+                hospital,
+                savedTransaction.getCounterpartyName(),
+                savedTransaction.getAccountTitle()
+        );
+        return BusinessTransactionResponse.from(savedTransaction);
+    }
+
+    @Transactional
+    public BusinessTransactionResponse updateTransaction(Long transactionId, BusinessTransactionUpdateRequest request) {
+        BusinessTransaction transaction = businessTransactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("TRANSACTION_NOT_FOUND"));
+        updateTransactionFields(transaction, request);
+        accountTitleRecommendationService.learnIfPossible(
+                transaction.getHospital(),
+                transaction.getCounterpartyName(),
+                transaction.getAccountTitle()
+        );
+        return BusinessTransactionResponse.from(transaction);
+    }
+
+    @Transactional
+    public BusinessTransactionResponse saveEvidenceTransaction(Long evidenceId, BusinessTransactionUpdateRequest request) {
+        Evidence evidence = evidenceRepository.findById(evidenceId)
+                .orElseThrow(() -> new IllegalArgumentException("EVIDENCE_NOT_FOUND"));
+
+        BusinessTransaction transaction;
+        if (evidence.getTransactionId() == null) {
+            transaction = new BusinessTransaction(
+                    evidence.getHospital(),
+                    evidence.getTaxYearWorkspace(),
+                    request.transactionDate(),
+                    request.counterpartyName(),
+                    normalizeBusinessNumber(request.counterpartyBusinessNumber()),
+                    request.amount(),
+                    request.supplyAmount(),
+                    request.vatAmount(),
+                    request.transactionType(),
+                    request.accountTitle(),
+                    request.reviewStatus(),
+                    request.memo()
+            );
+            businessTransactionRepository.save(transaction);
+            evidence.linkTransaction(transaction);
+        } else {
+            transaction = businessTransactionRepository.findById(evidence.getTransactionId())
+                    .orElseThrow(() -> new IllegalArgumentException("TRANSACTION_NOT_FOUND"));
+            updateTransactionFields(transaction, request);
+        }
+
+        accountTitleRecommendationService.learnIfPossible(
+                transaction.getHospital(),
+                transaction.getCounterpartyName(),
+                transaction.getAccountTitle()
+        );
+        return BusinessTransactionResponse.from(transaction);
     }
 
     @Transactional(readOnly = true)
@@ -150,5 +210,28 @@ public class WorkspaceService {
     private TaxYearWorkspace requireWorkspace(Long hospitalId, int taxYear) {
         return taxYearWorkspaceRepository.findByHospital_IdAndTaxYear(hospitalId, taxYear)
                 .orElseThrow(() -> new IllegalArgumentException("TAX_YEAR_WORKSPACE_NOT_FOUND"));
+    }
+
+    private void updateTransactionFields(BusinessTransaction transaction, BusinessTransactionUpdateRequest request) {
+        transaction.update(
+                request.transactionDate(),
+                request.counterpartyName(),
+                normalizeBusinessNumber(request.counterpartyBusinessNumber()),
+                request.amount(),
+                request.supplyAmount(),
+                request.vatAmount(),
+                request.transactionType(),
+                request.accountTitle(),
+                request.reviewStatus(),
+                request.memo()
+        );
+    }
+
+    private String normalizeBusinessNumber(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.replaceAll("\\D", "");
+        return normalized.isBlank() ? null : normalized;
     }
 }

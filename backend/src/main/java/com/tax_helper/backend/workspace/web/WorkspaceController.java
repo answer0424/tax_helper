@@ -1,14 +1,17 @@
 package com.tax_helper.backend.workspace.web;
 
+import com.tax_helper.backend.workspace.AccountTitleRecommendationService;
 import com.tax_helper.backend.workspace.EvidenceUploadService;
 import com.tax_helper.backend.workspace.OcrService;
 import com.tax_helper.backend.workspace.WorkspaceService;
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,15 +31,18 @@ public class WorkspaceController {
     private final WorkspaceService workspaceService;
     private final EvidenceUploadService evidenceUploadService;
     private final OcrService ocrService;
+    private final AccountTitleRecommendationService accountTitleRecommendationService;
 
     public WorkspaceController(
             WorkspaceService workspaceService,
             EvidenceUploadService evidenceUploadService,
-            OcrService ocrService
+            OcrService ocrService,
+            AccountTitleRecommendationService accountTitleRecommendationService
     ) {
         this.workspaceService = workspaceService;
         this.evidenceUploadService = evidenceUploadService;
         this.ocrService = ocrService;
+        this.accountTitleRecommendationService = accountTitleRecommendationService;
     }
 
     @GetMapping("/hospitals/{hospitalId}/tax-years/{taxYear}/transactions")
@@ -55,6 +61,38 @@ public class WorkspaceController {
             @Valid @RequestBody BusinessTransactionCreateRequest request
     ) {
         return workspaceService.createTransaction(hospitalId, taxYear, request);
+    }
+
+    @PutMapping("/transactions/{transactionId}")
+    public BusinessTransactionResponse updateTransaction(
+            @PathVariable Long transactionId,
+            @Valid @RequestBody BusinessTransactionUpdateRequest request
+    ) {
+        return workspaceService.updateTransaction(transactionId, request);
+    }
+
+    @GetMapping("/hospitals/{hospitalId}/account-title-suggestions")
+    public List<AccountTitleSuggestionResponse> suggestAccountTitles(
+            @PathVariable Long hospitalId,
+            @RequestParam(required = false) String counterpartyName,
+            @RequestParam(required = false) String itemName,
+            @RequestParam(required = false) BigDecimal amount
+    ) {
+        return accountTitleRecommendationService.suggest(hospitalId, counterpartyName, itemName, amount);
+    }
+
+    @GetMapping("/hospitals/{hospitalId}/counterparty-account-rules")
+    public List<CounterpartyAccountRuleResponse> findCounterpartyAccountRules(@PathVariable Long hospitalId) {
+        return accountTitleRecommendationService.findRules(hospitalId);
+    }
+
+    @PostMapping("/hospitals/{hospitalId}/counterparty-account-rules")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CounterpartyAccountRuleResponse saveCounterpartyAccountRule(
+            @PathVariable Long hospitalId,
+            @Valid @RequestBody CounterpartyAccountRuleRequest request
+    ) {
+        return accountTitleRecommendationService.learn(hospitalId, request.counterpartyName(), request.accountTitle());
     }
 
     @GetMapping("/hospitals/{hospitalId}/tax-years/{taxYear}/evidences")
@@ -93,7 +131,16 @@ public class WorkspaceController {
         Resource resource = evidenceUploadService.loadEvidenceFile(evidenceId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                .contentType(MediaTypeFactory.getMediaType(resource).orElse(MediaType.APPLICATION_OCTET_STREAM))
                 .body(resource);
+    }
+
+    @PostMapping("/evidences/{evidenceId}/transaction-review")
+    public BusinessTransactionResponse saveEvidenceTransaction(
+            @PathVariable Long evidenceId,
+            @Valid @RequestBody BusinessTransactionUpdateRequest request
+    ) {
+        return workspaceService.saveEvidenceTransaction(evidenceId, request);
     }
 
     @PostMapping("/evidences/{evidenceId}/ocr")

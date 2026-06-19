@@ -28,3 +28,16 @@ export const ocrStatusLabels = {
   COMPLETED: 'OCR 완료',
   FAILED: 'OCR 실패',
 }
+
+export const reviewStatusLabels = {
+  NOT_REVIEWED: '미검토',
+  NEEDS_REVIEW: '검토필요',
+  CONFIRMED: '확정',
+  HOLD: '보류',
+  EXCLUDED: '제외',
+}
+
+export const transactionTypeLabels = {
+  REVENUE: '수입',
+  EXPENSE: '비용',
+}

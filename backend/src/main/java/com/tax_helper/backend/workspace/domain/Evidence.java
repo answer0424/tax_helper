@@ -158,8 +158,16 @@ public class Evidence {
         return hospital.getId();
     }
 
+    public Hospital getHospital() {
+        return hospital;
+    }
+
     public Long getTaxYearWorkspaceId() {
         return taxYearWorkspace.getId();
+    }
+
+    public TaxYearWorkspace getTaxYearWorkspace() {
+        return taxYearWorkspace;
     }
 
     public Long getTransactionId() {
@@ -301,5 +309,9 @@ public class Evidence {
         this.extractedItemName = extractedItemName;
         this.extractedPaymentMethod = extractedPaymentMethod;
         this.extractedApprovalNumber = extractedApprovalNumber;
+    }
+
+    public void linkTransaction(BusinessTransaction transaction) {
+        this.transaction = transaction;
     }
 }

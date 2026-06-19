@@ -108,6 +108,10 @@ public class BusinessTransaction {
         return hospital.getId();
     }
 
+    public Hospital getHospital() {
+        return hospital;
+    }
+
     public Long getTaxYearWorkspaceId() {
         return taxYearWorkspace.getId();
     }
@@ -154,5 +158,29 @@ public class BusinessTransaction {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public void update(
+            LocalDate transactionDate,
+            String counterpartyName,
+            String counterpartyBusinessNumber,
+            BigDecimal amount,
+            BigDecimal supplyAmount,
+            BigDecimal vatAmount,
+            TransactionType transactionType,
+            String accountTitle,
+            ReviewStatus reviewStatus,
+            String memo
+    ) {
+        this.transactionDate = transactionDate;
+        this.counterpartyName = counterpartyName;
+        this.counterpartyBusinessNumber = counterpartyBusinessNumber;
+        this.amount = amount;
+        this.supplyAmount = supplyAmount;
+        this.vatAmount = vatAmount;
+        this.transactionType = transactionType;
+        this.accountTitle = accountTitle;
+        this.reviewStatus = reviewStatus == null ? ReviewStatus.NOT_REVIEWED : reviewStatus;
+        this.memo = memo;
     }
 }

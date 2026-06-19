@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
-import { apiRequest, runEvidenceOcr, updateEvidenceOcr, uploadEvidenceFiles } from './api/client'
+import {
+  apiRequest,
+  getAccountTitleSuggestions,
+  getCounterpartyAccountRules,
+  runEvidenceOcr,
+  saveEvidenceTransactionReview,
+  updateEvidenceOcr,
+  updateTransaction,
+  uploadEvidenceFiles,
+} from './api/client'
 import { AppHeader } from './components/AppHeader'
 import { EvidenceList } from './components/EvidenceList'
 import { EvidencePreview } from './components/EvidencePreview'
@@ -9,6 +18,7 @@ import { HospitalRegistrationForm } from './components/HospitalRegistrationForm'
 import { Notice } from './components/Notice'
 import { OcrEditor } from './components/OcrEditor'
 import { TaxYearPanel } from './components/TaxYearPanel'
+import { TransactionReviewPanel } from './components/TransactionReviewPanel'
 import { WorkspaceSummary } from './components/WorkspaceSummary'
 import { initialHospitalForm } from './constants/labels'
 import './App.css'
@@ -21,8 +31,11 @@ function App() {
   const [selectedTaxYear, setSelectedTaxYear] = useState(null)
   const [taxYearInput, setTaxYearInput] = useState(new Date().getFullYear() - 1)
   const [workspaceCounts, setWorkspaceCounts] = useState({ transactions: 0, evidences: 0 })
+  const [transactions, setTransactions] = useState([])
   const [evidences, setEvidences] = useState([])
+  const [counterpartyAccountRules, setCounterpartyAccountRules] = useState([])
   const [selectedEvidenceId, setSelectedEvidenceId] = useState(null)
+  const [selectedTransactionId, setSelectedTransactionId] = useState(null)
   const [uploadFiles, setUploadFiles] = useState([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -86,12 +99,16 @@ function App() {
         apiRequest(`/api/hospitals/${hospitalId}/tax-years/${taxYear}/transactions`),
         apiRequest(`/api/hospitals/${hospitalId}/tax-years/${taxYear}/evidences`),
       ])
+      const rules = await getCounterpartyAccountRules(hospitalId)
       setWorkspaceCounts({
         transactions: transactions.length,
         evidences: evidenceData.length,
       })
+      setTransactions(transactions)
       setEvidences(evidenceData)
+      setCounterpartyAccountRules(rules)
       setSelectedEvidenceId((currentId) => currentId ?? evidenceData[0]?.id ?? null)
+      setSelectedTransactionId((currentId) => currentId ?? transactions[0]?.id ?? null)
     } catch (event) {
       setError(event.message)
     }
@@ -115,8 +132,11 @@ function App() {
 
   function clearWorkspace() {
     setWorkspaceCounts({ transactions: 0, evidences: 0 })
+    setTransactions([])
     setEvidences([])
+    setCounterpartyAccountRules([])
     setSelectedEvidenceId(null)
+    setSelectedTransactionId(null)
   }
 
   async function submitHospital(event) {
@@ -257,6 +277,30 @@ function App() {
     )
   }
 
+  async function saveTransactionReview(payload) {
+    if (!selectedEvidence && !selectedTransactionId) {
+      setError('검토할 증빙 또는 거래를 선택해 주세요.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const savedTransaction = selectedTransactionId
+        ? await updateTransaction(selectedTransactionId, payload)
+        : await saveEvidenceTransactionReview(selectedEvidence.id, payload)
+      setSelectedTransactionId(savedTransaction.id)
+      setMessage('거래 검토 내용을 저장했습니다.')
+      await loadWorkspace(selectedHospitalId, selectedTaxYear)
+    } catch (event) {
+      setError(event.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <main className="app-shell">
       <AppHeader loading={loading} />
@@ -307,6 +351,30 @@ function App() {
           onSave={saveOcrResult}
         />
       </section>
+
+      <TransactionReviewPanel
+        evidences={evidences}
+        transactions={transactions}
+        counterpartyAccountRules={counterpartyAccountRules}
+        selectedEvidence={selectedEvidence}
+        selectedTransactionId={selectedTransactionId}
+        selectedHospitalId={selectedHospitalId}
+        loading={loading}
+        onSuggestAccountTitles={getAccountTitleSuggestions}
+        onSelectEvidence={(evidenceId) => {
+          setSelectedEvidenceId(evidenceId)
+          const evidence = evidences.find((item) => item.id === evidenceId)
+          setSelectedTransactionId(evidence?.transactionId ?? null)
+        }}
+        onSelectTransaction={(transactionId) => {
+          setSelectedTransactionId(transactionId)
+          const linkedEvidence = evidences.find((evidence) => evidence.transactionId === transactionId)
+          if (linkedEvidence) {
+            setSelectedEvidenceId(linkedEvidence.id)
+          }
+        }}
+        onSave={saveTransactionReview}
+      />
     </main>
   )
 }
