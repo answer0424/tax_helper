@@ -2,7 +2,9 @@ package com.tax_helper.backend.workspace.domain;
 
 import com.tax_helper.backend.hospital.domain.Hospital;
 import com.tax_helper.backend.hospital.domain.TaxYearWorkspace;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -16,6 +18,9 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "business_transactions")
@@ -65,6 +70,12 @@ public class BusinessTransaction {
     @Column(length = 500)
     private String memo;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "business_transaction_risk_tags", joinColumns = @JoinColumn(name = "transaction_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "risk_tag", length = 40)
+    private Set<RiskTag> riskTags = new HashSet<>();
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -83,7 +94,8 @@ public class BusinessTransaction {
             TransactionType transactionType,
             String accountTitle,
             ReviewStatus reviewStatus,
-            String memo
+            String memo,
+            Collection<RiskTag> riskTags
     ) {
         this.hospital = hospital;
         this.taxYearWorkspace = taxYearWorkspace;
@@ -97,6 +109,7 @@ public class BusinessTransaction {
         this.accountTitle = accountTitle;
         this.reviewStatus = reviewStatus == null ? ReviewStatus.NOT_REVIEWED : reviewStatus;
         this.memo = memo;
+        replaceRiskTags(riskTags);
         this.createdAt = LocalDateTime.now();
     }
 
@@ -156,6 +169,10 @@ public class BusinessTransaction {
         return memo;
     }
 
+    public Set<RiskTag> getRiskTags() {
+        return Set.copyOf(riskTags);
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -170,7 +187,8 @@ public class BusinessTransaction {
             TransactionType transactionType,
             String accountTitle,
             ReviewStatus reviewStatus,
-            String memo
+            String memo,
+            Collection<RiskTag> riskTags
     ) {
         this.transactionDate = transactionDate;
         this.counterpartyName = counterpartyName;
@@ -182,5 +200,13 @@ public class BusinessTransaction {
         this.accountTitle = accountTitle;
         this.reviewStatus = reviewStatus == null ? ReviewStatus.NOT_REVIEWED : reviewStatus;
         this.memo = memo;
+        replaceRiskTags(riskTags);
+    }
+
+    public void replaceRiskTags(Collection<RiskTag> riskTags) {
+        this.riskTags.clear();
+        if (riskTags != null) {
+            this.riskTags.addAll(riskTags);
+        }
     }
 }

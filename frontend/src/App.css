@@ -479,7 +479,7 @@ textarea {
 
 .review-filters {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 130px;
+  grid-template-columns: minmax(0, 1fr) 130px 150px;
   gap: 10px;
   margin-bottom: 14px;
 }
@@ -537,6 +537,62 @@ textarea {
 .account-suggestion small {
   font-size: 12px;
   font-weight: 600;
+}
+
+.risk-tag-editor {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.risk-tag-editor > strong {
+  color: #111827;
+  font-size: 14px;
+}
+
+.risk-tag-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.risk-tag-option {
+  min-height: 32px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.risk-tag-option input {
+  width: 14px;
+  min-height: 14px;
+}
+
+.risk-tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.risk-tag-chip {
+  padding: 4px 7px;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  color: #991b1b;
+  background: #fef2f2;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .review-actions {

@@ -2,10 +2,12 @@ package com.tax_helper.backend.workspace.web;
 
 import com.tax_helper.backend.workspace.domain.BusinessTransaction;
 import com.tax_helper.backend.workspace.domain.ReviewStatus;
+import com.tax_helper.backend.workspace.domain.RiskTag;
 import com.tax_helper.backend.workspace.domain.TransactionType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 public record BusinessTransactionResponse(
         Long id,
@@ -21,6 +23,7 @@ public record BusinessTransactionResponse(
         String accountTitle,
         ReviewStatus reviewStatus,
         String memo,
+        Set<RiskTag> riskTags,
         LocalDateTime createdAt
 ) {
     public static BusinessTransactionResponse from(BusinessTransaction transaction) {
@@ -38,6 +41,7 @@ public record BusinessTransactionResponse(
                 transaction.getAccountTitle(),
                 transaction.getReviewStatus(),
                 transaction.getMemo(),
+                transaction.getRiskTags(),
                 transaction.getCreatedAt()
         );
     }

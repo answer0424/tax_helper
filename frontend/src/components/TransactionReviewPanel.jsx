@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { reviewStatusLabels, transactionTypeLabels } from '../constants/labels'
+import { reviewStatusLabels, riskTagLabels, transactionTypeLabels } from '../constants/labels'
 import { formatWon } from '../utils/formatters'
 
 const emptyReviewForm = {
@@ -12,6 +12,7 @@ const emptyReviewForm = {
   transactionType: 'EXPENSE',
   accountTitle: '',
   reviewStatus: 'NOT_REVIEWED',
+  riskTags: [],
   memo: '',
 }
 
@@ -50,19 +51,22 @@ export function TransactionReviewPanel({
 }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
+  const [tagFilter, setTagFilter] = useState('ALL')
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((transaction) => {
       const matchesStatus = statusFilter === 'ALL' || transaction.reviewStatus === statusFilter
+      const matchesTag = tagFilter === 'ALL' || transaction.riskTags?.includes(tagFilter)
       const keyword = search.trim().toLowerCase()
       const matchesSearch =
         keyword === '' ||
         transaction.counterpartyName?.toLowerCase().includes(keyword) ||
         transaction.accountTitle?.toLowerCase().includes(keyword) ||
-        transaction.memo?.toLowerCase().includes(keyword)
-      return matchesStatus && matchesSearch
+        transaction.memo?.toLowerCase().includes(keyword) ||
+        transaction.riskTags?.some((tag) => riskTagLabels[tag]?.toLowerCase().includes(keyword))
+      return matchesStatus && matchesTag && matchesSearch
     })
-  }, [transactions, search, statusFilter])
+  }, [transactions, search, statusFilter, tagFilter])
 
   const selectedTransaction = useMemo(
     () => transactions.find((transaction) => transaction.id === selectedTransactionId),
@@ -83,10 +87,18 @@ export function TransactionReviewPanel({
         </div>
 
         <div className="review-filters">
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="거래처, 계정, 메모 검색" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="거래처, 계정, 메모, 태그 검색" />
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-            <option value="ALL">전체</option>
+            <option value="ALL">전체 상태</option>
             {Object.entries(reviewStatusLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <select value={tagFilter} onChange={(event) => setTagFilter(event.target.value)}>
+            <option value="ALL">전체 태그</option>
+            {Object.entries(riskTagLabels).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>
@@ -110,6 +122,7 @@ export function TransactionReviewPanel({
               <small>
                 {transactionTypeLabels[transaction.transactionType]} · {transaction.accountTitle || '계정 미입력'}
               </small>
+              <RiskTagChips tags={transaction.riskTags ?? []} />
             </button>
           ))}
         </div>
@@ -233,6 +246,7 @@ function ReviewForm({ evidence, transaction, selectedHospitalId, loading, onSugg
       transactionType: form.transactionType,
       accountTitle: form.accountTitle || null,
       reviewStatus: overrideStatus || form.reviewStatus,
+      riskTags: form.riskTags,
       memo: form.memo || null,
     })
   }
@@ -337,6 +351,8 @@ function ReviewForm({ evidence, transaction, selectedHospitalId, loading, onSugg
             onApply={(accountTitle) => updateField('accountTitle', accountTitle)}
           />
 
+          <RiskTagEditor selectedTags={form.riskTags} onChange={(riskTags) => updateField('riskTags', riskTags)} />
+
           <label className="raw-text-field">
             메모
             <textarea value={form.memo} onChange={(event) => updateField('memo', event.target.value)} />
@@ -391,6 +407,50 @@ function AccountTitleSuggestions({ loading, suggestions, onApply }) {
   )
 }
 
+function RiskTagEditor({ selectedTags, onChange }) {
+  const selected = new Set(selectedTags)
+
+  function toggle(tag) {
+    const next = new Set(selected)
+    if (next.has(tag)) {
+      next.delete(tag)
+    } else {
+      next.add(tag)
+    }
+    onChange([...next])
+  }
+
+  return (
+    <div className="risk-tag-editor">
+      <strong>위험 태그</strong>
+      <div className="risk-tag-options">
+        {Object.entries(riskTagLabels).map(([tag, label]) => (
+          <label className="risk-tag-option" key={tag}>
+            <input type="checkbox" checked={selected.has(tag)} onChange={() => toggle(tag)} />
+            {label}
+          </label>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function RiskTagChips({ tags }) {
+  if (tags.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="risk-tag-chips">
+      {tags.map((tag) => (
+        <span className="risk-tag-chip" key={tag}>
+          {riskTagLabels[tag] ?? tag}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 function buildReviewForm(evidence, transaction) {
   if (transaction) {
     return {
@@ -403,6 +463,7 @@ function buildReviewForm(evidence, transaction) {
       transactionType: transaction.transactionType ?? 'EXPENSE',
       accountTitle: transaction.accountTitle ?? '',
       reviewStatus: transaction.reviewStatus ?? 'NOT_REVIEWED',
+      riskTags: transaction.riskTags ?? [],
       memo: transaction.memo ?? '',
     }
   }
@@ -418,6 +479,7 @@ function buildReviewForm(evidence, transaction) {
       transactionType: 'EXPENSE',
       accountTitle: '',
       reviewStatus: evidence.ocrReviewRequired ? 'NEEDS_REVIEW' : 'NOT_REVIEWED',
+      riskTags: evidence.ocrReviewRequired ? ['OCR_REVIEW_REQUIRED'] : [],
       memo: '',
     }
   }

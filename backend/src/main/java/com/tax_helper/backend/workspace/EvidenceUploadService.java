@@ -160,7 +160,7 @@ public class EvidenceUploadService {
                 hospital,
                 workspace,
                 null,
-                EvidenceType.OTHER,
+                classifyEvidenceType(originalFileName, contentType),
                 targetPath.toString(),
                 originalFileName,
                 storedFileName,
@@ -223,6 +223,26 @@ public class EvidenceUploadService {
             return "application/pdf";
         }
         return "application/octet-stream";
+    }
+
+    private EvidenceType classifyEvidenceType(String fileName, String contentType) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        if (lower.contains("세금계산서") || lower.contains("tax_invoice")) {
+            return EvidenceType.TAX_INVOICE;
+        }
+        if (lower.contains("현금영수증") || lower.contains("cash_receipt")) {
+            return EvidenceType.CASH_RECEIPT;
+        }
+        if (lower.contains("카드") || lower.contains("card")) {
+            return EvidenceType.CARD_RECEIPT;
+        }
+        if (lower.contains("간이") || lower.contains("simple")) {
+            return EvidenceType.SIMPLE_RECEIPT;
+        }
+        if ("application/pdf".equalsIgnoreCase(contentType) || lower.endsWith(".pdf")) {
+            return EvidenceType.INVOICE;
+        }
+        return EvidenceType.OTHER;
     }
 
     private String sanitizeFileName(String fileName) {

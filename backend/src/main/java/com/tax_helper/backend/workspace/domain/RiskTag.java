@@ -1,0 +1,13 @@
+package com.tax_helper.backend.workspace.domain;
+
+public enum RiskTag {
+    QUALIFIED_EVIDENCE,
+    MISSING_EVIDENCE,
+    SIMPLE_RECEIPT,
+    HIGH_VALUE,
+    FIXED_ASSET_CANDIDATE,
+    ENTERTAINMENT_REVIEW,
+    VEHICLE_REVIEW,
+    OWNER_EXPENSE_REVIEW,
+    OCR_REVIEW_REQUIRED
+}

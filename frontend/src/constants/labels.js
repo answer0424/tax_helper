@@ -1,3 +1,15 @@
+export const riskTagLabels = {
+  QUALIFIED_EVIDENCE: '적격증빙',
+  MISSING_EVIDENCE: '증빙부족',
+  SIMPLE_RECEIPT: '간이영수증',
+  HIGH_VALUE: '고액거래',
+  FIXED_ASSET_CANDIDATE: '고정자산후보',
+  ENTERTAINMENT_REVIEW: '접대비검토',
+  VEHICLE_REVIEW: '차량관련검토',
+  OWNER_EXPENSE_REVIEW: '대표자지출검토',
+  OCR_REVIEW_REQUIRED: 'OCR확인필요',
+}
+
 export const initialHospitalForm = {
   name: '',
   ownerName: '',

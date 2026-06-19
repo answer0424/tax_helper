@@ -7,6 +7,7 @@ import com.tax_helper.backend.hospital.repository.TaxYearWorkspaceRepository;
 import com.tax_helper.backend.workspace.domain.BusinessTransaction;
 import com.tax_helper.backend.workspace.domain.Evidence;
 import com.tax_helper.backend.workspace.domain.EvidenceUploadStatus;
+import com.tax_helper.backend.workspace.domain.RiskTag;
 import com.tax_helper.backend.workspace.domain.TaxRule;
 import com.tax_helper.backend.workspace.repository.BusinessTransactionRepository;
 import com.tax_helper.backend.workspace.repository.EvidenceRepository;
@@ -19,6 +20,7 @@ import com.tax_helper.backend.workspace.web.EvidenceResponse;
 import com.tax_helper.backend.workspace.web.TaxRuleCreateRequest;
 import com.tax_helper.backend.workspace.web.TaxRuleResponse;
 import java.util.List;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class WorkspaceService {
     private final EvidenceRepository evidenceRepository;
     private final TaxRuleRepository taxRuleRepository;
     private final AccountTitleRecommendationService accountTitleRecommendationService;
+    private final RiskTagService riskTagService;
 
     public WorkspaceService(
             HospitalRepository hospitalRepository,
@@ -38,7 +41,8 @@ public class WorkspaceService {
             BusinessTransactionRepository businessTransactionRepository,
             EvidenceRepository evidenceRepository,
             TaxRuleRepository taxRuleRepository,
-            AccountTitleRecommendationService accountTitleRecommendationService
+            AccountTitleRecommendationService accountTitleRecommendationService,
+            RiskTagService riskTagService
     ) {
         this.hospitalRepository = hospitalRepository;
         this.taxYearWorkspaceRepository = taxYearWorkspaceRepository;
@@ -46,6 +50,7 @@ public class WorkspaceService {
         this.evidenceRepository = evidenceRepository;
         this.taxRuleRepository = taxRuleRepository;
         this.accountTitleRecommendationService = accountTitleRecommendationService;
+        this.riskTagService = riskTagService;
     }
 
     @Transactional(readOnly = true)
@@ -78,7 +83,8 @@ public class WorkspaceService {
                 request.transactionType(),
                 request.accountTitle(),
                 request.reviewStatus(),
-                request.memo()
+                request.memo(),
+                riskTagService.calculate(request)
         );
 
         BusinessTransaction savedTransaction = businessTransactionRepository.save(transaction);
@@ -122,14 +128,15 @@ public class WorkspaceService {
                     request.transactionType(),
                     request.accountTitle(),
                     request.reviewStatus(),
-                    request.memo()
+                    request.memo(),
+                    riskTagService.calculate(request, evidence)
             );
             businessTransactionRepository.save(transaction);
             evidence.linkTransaction(transaction);
         } else {
             transaction = businessTransactionRepository.findById(evidence.getTransactionId())
                     .orElseThrow(() -> new IllegalArgumentException("TRANSACTION_NOT_FOUND"));
-            updateTransactionFields(transaction, request);
+            updateTransactionFields(transaction, request, riskTagService.calculate(request, evidence));
         }
 
         accountTitleRecommendationService.learnIfPossible(
@@ -213,6 +220,14 @@ public class WorkspaceService {
     }
 
     private void updateTransactionFields(BusinessTransaction transaction, BusinessTransactionUpdateRequest request) {
+        updateTransactionFields(transaction, request, riskTagService.calculate(request));
+    }
+
+    private void updateTransactionFields(
+            BusinessTransaction transaction,
+            BusinessTransactionUpdateRequest request,
+            Set<RiskTag> riskTags
+    ) {
         transaction.update(
                 request.transactionDate(),
                 request.counterpartyName(),
@@ -223,7 +238,8 @@ public class WorkspaceService {
                 request.transactionType(),
                 request.accountTitle(),
                 request.reviewStatus(),
-                request.memo()
+                request.memo(),
+                riskTags
         );
     }
 
